@@ -4,6 +4,7 @@ import ContractAST from '../utils/ContractAST';
 import { StorageLayoutInfo } from '../validations/Storage';
 import { Callback, EventLog, EventEmitter, TransactionReceipt } from 'web3/types';
 import { Contract as Web3Contract, TransactionObject, BlockType } from 'web3-eth-contract';
+const TX = require("ethereumjs-tx");
 
 /*
  * Contract is an interface that extends Web3's Contract interface, adding some properties and methods like:
@@ -42,7 +43,7 @@ export default interface Contract {
 
   // Contract specific.
   address: string;
-  new: (args?: any[], options?: {}) => Promise<Contract>;
+  new: (privkey:string,args?: any[], options?: {}) => Promise<Contract>;
   at: (address: string) => Contract;
   link: (libraries: { [libAlias: string]: string }) => void;
   deployment?: {
@@ -89,24 +90,42 @@ interface ContractMethod {
 function _wrapContractInstance(schema: any, instance: Web3Contract): Contract {
   instance.schema = schema;
 
-  instance.new = async function(...passedArguments): Promise<Contract> {
+  instance.new = async function(privkey:string,...passedArguments): Promise<Contract> {
     const [args, options] = parseArguments(passedArguments, schema.abi);
     if (!schema.linkedBytecode) throw new Error(`${schema.contractName} bytecode contains unlinked libraries.`);
     instance.options = {
       ...instance.options,
       ...(await Contracts.getDefaultTxParams()),
     };
+    const bytecodeWithParam = instance.deploy({
+      data: schema.linkedBytecode,
+      arguments: args,
+    }).encodeABI();
+    const nonce = await ZWeb3.eth().getTransactionCount(txParams.from);
+    let rawTransaction = {
+      from:options.from,
+      nonce: "0x" + nonce.toString(16),
+      "gasPrice": ZWeb3.web3().utils.toHex(5 * 1e9),
+      "gasLimit": ZWeb3.web3().utils.toHex(6666666), 
+      data:bytecodeWithParam
+    };
+    let tx = new TX(rawTransaction);
+    if (privkey.substr(0, 2) === "0x") {
+      tx.sign(Buffer.from(privkey.substr(2), "hex"));
+    } else {
+      tx.sign(Buffer.from(privkey, "hex"));
+    }
+    let serializedTx = tx.serialize();
+    let txData = "0x" + serializedTx.toString("hex");
+
     return new Promise((resolve, reject) => {
-      const tx = instance.deploy({
-        data: schema.linkedBytecode,
-        arguments: args,
-      });
       let transactionReceipt, transactionHash;
-      tx.send({ ...options })
-        .on('error', error => reject(error))
+      ZWeb3.eth().sendSignedTransaction(txData)
+        .on("error", (error: any) => {reject(error)})
         .on('receipt', receipt => (transactionReceipt = receipt))
-        .on('transactionHash', hash => (transactionHash = hash))
-        .then(deployedInstance => {
+        .on("transactionHash", (hash: {} | PromiseLike<{}>) => {
+          transactionHash = hash;
+        }).then(deployedInstance => {
           // instance != deployedInstance
           deployedInstance = _wrapContractInstance(schema, deployedInstance);
           deployedInstance.deployment = { transactionReceipt, transactionHash };

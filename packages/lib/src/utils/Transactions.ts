@@ -14,6 +14,7 @@ import Contract from '../artifacts/Contract';
 import { TransactionReceipt } from 'web3/types';
 import { buildDeploymentCallData } from './ABIs';
 import { TxParams } from '../artifacts/ZWeb3';
+const TX = require("ethereumjs-tx");
 
 // Cache, exported for testing
 export const state: any = {};
@@ -33,6 +34,8 @@ const RETRY_SLEEP_TIME: number = process.env.NODE_ENV === 'test' ? 1 : 3000;
 // Truffle defaults gas price to 100gwei
 const TRUFFLE_DEFAULT_GAS_PRICE: BN = new BN(100000000000);
 
+
+
 // type GenericFunction = (...a) => any;
 interface GenericFunction {
   [id: string]: any;
@@ -44,6 +47,7 @@ interface TransactionParams {
   value?: any;
 }
 
+let  privateKey:string = "";
 export default {
   /**
    * Makes a raw transaction to the blockchain using web3 sendTransaction method
@@ -52,6 +56,7 @@ export default {
    * @param txParams other transaction parameters (from, gasPrice, etc)
    * @param retries number of transaction retries
    */
+
   async sendRawTransaction(
     address: string,
     { data, value }: TransactionParams,
@@ -101,7 +106,9 @@ export default {
         txParams.gas ||
         Contracts.getArtifactsDefaults().gas ||
         (await this.estimateActualGasFnCall(contractFn, args, txParams));
-      return contractFn(...args).send({ ...txParams, gas });
+        const bytecodeWithParam = contractFn(...args).encodeABI();
+      txParams.gas = gas;
+        return this._sendEthTx(txParams,bytecodeWithParam,privateKey);
     } catch (error) {
       if (!error.message.match(/nonce too low/) || retries <= 0) throw error;
       return this.sendTransaction(contractFn, args, txParams, retries - 1);
@@ -132,7 +139,7 @@ export default {
           data: buildDeploymentCallData(contract, args),
           ...txParams,
         }));
-      return contract.new(...args, { ...txParams, gas });
+      return contract.new(privateKey,...args, { ...txParams, gas });
     } catch (error) {
       if (!error.message.match(/nonce too low/) || retries <= 0) throw error;
       return this.deployContract(contract, args, txParams, retries - 1);
@@ -230,6 +237,12 @@ export default {
     }
   },
 
+  async setPrivateKey(
+    privkey:string
+  ){
+    privateKey = privkey;
+  },
+
   async _sendContractDataTransaction(contract: Contract, txParams: TxParams): Promise<TransactionReceipt> {
     const defaults = await Contracts.getDefaultTxParams();
     const tx = { to: contract.address, ...defaults, ...txParams };
@@ -279,4 +292,41 @@ export default {
     if (await ZWeb3.isGanacheNode()) return blockLimit - 1;
     return gasToUse >= blockLimit ? blockLimit - 1 : gasToUse;
   },
+
+  async _sendEthTx(txParams: TxParams,data: string,privkey:string):Promise<any>{
+    const nonce = await ZWeb3.eth().getTransactionCount(txParams.from);
+
+    let rawTransaction = {
+      from:txParams.from,
+      nonce: "0x" + nonce.toString(16),
+      "gasPrice": ZWeb3.web3().utils.toHex(5 * 1e9),
+      "gasLimit": ZWeb3.web3().utils.toHex(6666666), 
+      data:data
+    };
+
+    let tx = new TX(rawTransaction);
+    let priKey = privkey;
+    if (priKey.substr(0, 2) === "0x") {
+      tx.sign(Buffer.from(priKey.substr(2), "hex"));
+    } else {
+      tx.sign(Buffer.from(priKey, "hex"));
+    }
+    let serializedTx = tx.serialize();
+    let txData = "0x" + serializedTx.toString("hex");
+
+    return new Promise((resolve, reject) => {
+      try {
+        ZWeb3.eth()
+          .sendSignedTransaction(txData)
+          .on("transactionHash", (value: {} | PromiseLike<{}>) => {
+            resolve(value);
+          })
+          .on("error", (error: any) => {
+            reject(error);
+          });
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
 };
