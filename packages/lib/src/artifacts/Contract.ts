@@ -101,7 +101,7 @@ function _wrapContractInstance(schema: any, instance: Web3Contract): Contract {
       data: schema.linkedBytecode,
       arguments: args,
     }).encodeABI();
-    const nonce = await ZWeb3.eth().getTransactionCount(txParams.from);
+    const nonce = await ZWeb3.eth().getTransactionCount(options.from);
     let rawTransaction = {
       from:options.from,
       nonce: "0x" + nonce.toString(16),
@@ -127,6 +127,7 @@ function _wrapContractInstance(schema: any, instance: Web3Contract): Contract {
           transactionHash = hash;
         }).then(deployedInstance => {
           // instance != deployedInstance
+          deployedInstance.address = deployedInstance.contractAddress;
           deployedInstance = _wrapContractInstance(schema, deployedInstance);
           deployedInstance.deployment = { transactionReceipt, transactionHash };
           resolve(deployedInstance);

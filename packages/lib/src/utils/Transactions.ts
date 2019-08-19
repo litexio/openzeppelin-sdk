@@ -107,8 +107,7 @@ export default {
         Contracts.getArtifactsDefaults().gas ||
         (await this.estimateActualGasFnCall(contractFn, args, txParams));
         const bytecodeWithParam = contractFn(...args).encodeABI();
-      txParams.gas = gas;
-        return this._sendEthTx(txParams,bytecodeWithParam,privateKey);
+        return await this._sendEthTx(txParams,bytecodeWithParam,privateKey);
     } catch (error) {
       if (!error.message.match(/nonce too low/) || retries <= 0) throw error;
       return this.sendTransaction(contractFn, args, txParams, retries - 1);
