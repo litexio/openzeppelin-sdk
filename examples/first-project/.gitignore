@@ -1,5 +1,0 @@
-/build/*
-/zos.dev*
-.zos*
-.zos.session
-.openzeppelin/*
