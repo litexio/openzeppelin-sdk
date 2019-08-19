@@ -14,7 +14,7 @@ import Contract from '../artifacts/Contract';
 import { TransactionReceipt } from 'web3/types';
 import { buildDeploymentCallData } from './ABIs';
 import { TxParams } from '../artifacts/ZWeb3';
-const TX = require("ethereumjs-tx").Transaction;
+const TX = require("ethereumjs-tx");
 
 // Cache, exported for testing
 export const state: any = {};
