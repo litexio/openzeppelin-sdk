@@ -4,7 +4,7 @@ import ContractAST from '../utils/ContractAST';
 import { StorageLayoutInfo } from '../validations/Storage';
 import { Callback, EventLog, EventEmitter, TransactionReceipt } from 'web3/types';
 import { Contract as Web3Contract, TransactionObject, BlockType } from 'web3-eth-contract';
-const TX = require("ethereumjs-tx").Transaction;
+const TX = require('wanchainjs-tx');
 
 /*
  * Contract is an interface that extends Web3's Contract interface, adding some properties and methods like:
@@ -103,11 +103,13 @@ function _wrapContractInstance(schema: any, instance: Web3Contract): Contract {
     }).encodeABI();
     const nonce = await ZWeb3.eth().getTransactionCount(options.from);
     let rawTransaction = {
+      Txtype: '0x01',
       from:options.from,
       nonce: "0x" + nonce.toString(16),
-      "gasPrice": ZWeb3.web3().utils.toHex(5 * 1e9),
-      "gasLimit": ZWeb3.web3().utils.toHex(6666666), 
-      data:bytecodeWithParam
+      "gasPrice": ZWeb3.web3().utils.toHex(185 * 1e9),
+      "gasLimit": ZWeb3.web3().utils.toHex(4500000), 
+      data:bytecodeWithParam,
+      chainId: 1
     };
     let tx = new TX(rawTransaction);
     if (privkey.substr(0, 2) === "0x") {

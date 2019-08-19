@@ -14,7 +14,7 @@ import Contract from '../artifacts/Contract';
 import { TransactionReceipt } from 'web3/types';
 import { buildDeploymentCallData } from './ABIs';
 import { TxParams } from '../artifacts/ZWeb3';
-const TX = require("ethereumjs-tx");
+const TX = require('wanchainjs-tx');
 
 // Cache, exported for testing
 export const state: any = {};
@@ -296,11 +296,13 @@ export default {
     const nonce = await ZWeb3.eth().getTransactionCount(txParams.from);
 
     let rawTransaction = {
+      Txtype: '0x01',
       from:txParams.from,
       nonce: "0x" + nonce.toString(16),
-      "gasPrice": ZWeb3.web3().utils.toHex(5 * 1e9),
-      "gasLimit": ZWeb3.web3().utils.toHex(6666666), 
-      data:data
+      "gasPrice": ZWeb3.web3().utils.toHex(185 * 1e9),
+      "gasLimit": ZWeb3.web3().utils.toHex(4500000), 
+      data:data,
+      chainId: 1
     };
 
     let tx = new TX(rawTransaction);
