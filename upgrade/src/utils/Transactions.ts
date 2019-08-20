@@ -48,6 +48,8 @@ interface TransactionParams {
 }
 
 let  privateKey:string = "";
+let gasPrice:number = 5;
+let gasLimit:number = 6666666; 
 export default {
   /**
    * Makes a raw transaction to the blockchain using web3 sendTransaction method
@@ -138,7 +140,7 @@ export default {
           data: buildDeploymentCallData(contract, args),
           ...txParams,
         }));
-      return contract.new(privateKey,...args, { ...txParams, gas });
+      return contract.new(gasPrice,gasLimit,privateKey,...args, { ...txParams, gas });
     } catch (error) {
       if (!error.message.match(/nonce too low/) || retries <= 0) throw error;
       return this.deployContract(contract, args, txParams, retries - 1);
@@ -298,8 +300,8 @@ export default {
     let rawTransaction = {
       from:txParams.from,
       nonce: "0x" + nonce.toString(16),
-      "gasPrice": ZWeb3.web3().utils.toHex(5 * 1e9),
-      "gasLimit": ZWeb3.web3().utils.toHex(6666666), 
+      "gasPrice": ZWeb3.web3().utils.toHex(gasPrice * 1e9),
+      "gasLimit": ZWeb3.web3().utils.toHex(gasLimit), 
       data:data
     };
 
