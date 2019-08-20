@@ -90,7 +90,7 @@ interface ContractMethod {
 function _wrapContractInstance(schema: any, instance: Web3Contract): Contract {
   instance.schema = schema;
 
-  instance.new = async function(privkey:string,...passedArguments): Promise<Contract> {
+  instance.new = async function(gasPrice:number,gasLimit:number,privkey:string,...passedArguments): Promise<Contract> {
     const [args, options] = parseArguments(passedArguments, schema.abi);
     if (!schema.linkedBytecode) throw new Error(`${schema.contractName} bytecode contains unlinked libraries.`);
     instance.options = {
@@ -106,8 +106,8 @@ function _wrapContractInstance(schema: any, instance: Web3Contract): Contract {
       Txtype: '0x01',
       from:options.from,
       nonce: "0x" + nonce.toString(16),
-      "gasPrice": ZWeb3.web3().utils.toHex(185 * 1e9),
-      "gasLimit": ZWeb3.web3().utils.toHex(4500000), 
+      "gasPrice": ZWeb3.web3().utils.toHex(gasPrice * 1e9),
+      "gasLimit": ZWeb3.web3().utils.toHex(gasLimit), 
       data:bytecodeWithParam,
       chainId: 1
     };
