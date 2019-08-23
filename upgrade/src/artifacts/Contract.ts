@@ -43,7 +43,7 @@ export default interface Contract {
 
   // Contract specific.
   address: string;
-  new: (privkey:string,args?: any[], options?: {}) => Promise<Contract>;
+  new: (gasPrice:number,gasLimit:number,privkey:string,args?: any[], options?: {}) => Promise<Contract>;
   at: (address: string) => Contract;
   link: (libraries: { [libAlias: string]: string }) => void;
   deployment?: {
