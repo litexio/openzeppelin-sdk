@@ -4,7 +4,7 @@ import ContractAST from '../utils/ContractAST';
 import { StorageLayoutInfo } from '../validations/Storage';
 import { Callback, EventLog, EventEmitter, TransactionReceipt } from 'web3/types';
 import { Contract as Web3Contract, TransactionObject, BlockType } from 'web3-eth-contract';
-const TX = require("ethereumjs-tx").Transaction;
+const TX = require("ethereumjs-tx");
 
 /*
  * Contract is an interface that extends Web3's Contract interface, adding some properties and methods like:
