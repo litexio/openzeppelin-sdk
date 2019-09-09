@@ -48,8 +48,8 @@ interface TransactionParams {
 }
 
 let  privateKey:string = "";
-let gasPrice:number = 5;
-let gasLimit:number = 6666666; 
+let gasPrice:number ;
+let gasLimit:number ; 
 export default {
   /**
    * Makes a raw transaction to the blockchain using web3 sendTransaction method
@@ -242,6 +242,13 @@ export default {
     privkey:string
   ){
     privateKey = privkey;
+  },
+  async setGas(
+    _gasPrice:number,
+    _gasLimit:number
+  ){
+    gasPrice = _gasPrice;
+    gasLimit = _gasLimit;
   },
 
   async _sendContractDataTransaction(contract: Contract, txParams: TxParams): Promise<TransactionReceipt> {
