@@ -48,8 +48,7 @@ interface TransactionParams {
 }
 
 let  privateKey:string = "";
-let gasPrice:number ;
-let gasLimit:number ; 
+let gasPrice:number ; 
 export default {
   /**
    * Makes a raw transaction to the blockchain using web3 sendTransaction method
@@ -109,7 +108,7 @@ export default {
         Contracts.getArtifactsDefaults().gas ||
         (await this.estimateActualGasFnCall(contractFn, args, txParams));
         const bytecodeWithParam = contractFn(...args).encodeABI();
-        return await this._sendEthTx(txParams,bytecodeWithParam,privateKey);
+        return await this._sendEthTx(gas,txParams,bytecodeWithParam,privateKey);
     } catch (error) {
       if (!error.message.match(/nonce too low/) || retries <= 0) throw error;
       return this.sendTransaction(contractFn, args, txParams, retries - 1);
@@ -140,7 +139,7 @@ export default {
           data: buildDeploymentCallData(contract, args),
           ...txParams,
         }));
-      return contract.new(gasPrice,gasLimit,privateKey,...args, { ...txParams, gas });
+      return contract.new(gasPrice,privateKey,...args, { ...txParams, gas });
     } catch (error) {
       if (!error.message.match(/nonce too low/) || retries <= 0) throw error;
       return this.deployContract(contract, args, txParams, retries - 1);
@@ -244,11 +243,9 @@ export default {
     privateKey = privkey;
   },
   async setGas(
-    _gasPrice:number,
-    _gasLimit:number
+    _gasPrice:number
   ){
     gasPrice = _gasPrice;
-    gasLimit = _gasLimit;
   },
 
   async _sendContractDataTransaction(contract: Contract, txParams: TxParams): Promise<TransactionReceipt> {
@@ -301,14 +298,14 @@ export default {
     return gasToUse >= blockLimit ? blockLimit - 1 : gasToUse;
   },
 
-  async _sendEthTx(txParams: TxParams,data: string,privkey:string):Promise<any>{
+  async _sendEthTx(gas: number,txParams: TxParams,data: string,privkey:string):Promise<any>{
     const nonce = await ZWeb3.eth().getTransactionCount(txParams.from);
 
     let rawTransaction = {
       from:txParams.from,
       nonce: "0x" + nonce.toString(16),
       "gasPrice": ZWeb3.web3().utils.toHex(gasPrice * 1e9),
-      "gasLimit": ZWeb3.web3().utils.toHex(gasLimit), 
+      "gasLimit": ZWeb3.web3().utils.toHex(gas), 
       data:data
     };
 
