@@ -50,6 +50,7 @@ interface TransactionParams {
 
 let  privateKey:string = "";
 let gasPrice:number ; 
+let toAddress:string =  "";
 export default {
   /**
    * Makes a raw transaction to the blockchain using web3 sendTransaction method
@@ -96,7 +97,6 @@ export default {
    * @param retries number of transaction retries
    */
   async sendTransaction(
-    pAddress: string = "0x0000000000000000000000000000000000000000",
     contractFn: GenericFunction,
     args: any[] = [],
     txParams: TxParams = {},
@@ -110,7 +110,7 @@ export default {
         Contracts.getArtifactsDefaults().gas ||
         (await this.estimateActualGasFnCall(contractFn, args, txParams));
         const bytecodeWithParam = contractFn(...args).encodeABI();
-        return await this._sendEthTx(gas,txParams,bytecodeWithParam,privateKey,pAddress);
+        return await this._sendEthTx(gas,txParams,bytecodeWithParam,privateKey);
     } catch (error) {
       if (!error.message.match(/nonce too low/) || retries <= 0) throw error;
       return this.sendTransaction(contractFn, args, txParams, retries - 1);
@@ -248,6 +248,11 @@ export default {
     _gasPrice:number
   ){
     gasPrice = _gasPrice;
+  },
+  async setToaddress(
+    _toAddress:string
+  ){
+    toAddress = _toAddress;
   },
 
   async _sendContractDataTransaction(contract: Contract, txParams: TxParams): Promise<TransactionReceipt> {
