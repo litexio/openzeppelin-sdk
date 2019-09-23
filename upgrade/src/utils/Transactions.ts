@@ -96,7 +96,7 @@ export default {
    * @param retries number of transaction retries
    */
   async sendTransaction(
-    pAddress: string,
+    pAddress: string = "0x0000000000000000000000000000000000000000",
     contractFn: GenericFunction,
     args: any[] = [],
     txParams: TxParams = {},
