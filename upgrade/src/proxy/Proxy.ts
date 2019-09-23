@@ -41,15 +41,16 @@ export default class Proxy {
     this.txParams = txParams;
   }
 
-  public async upgradeTo(address: string, migrateData: string | null): Promise<any> {
+  public async upgradeTo(pAddress: string,address: string, migrateData: string | null): Promise<any> {
     await this.checkAdmin();
     return migrateData
       ? Transactions.sendTransaction(
+        pAddress,
           this.contract.methods.upgradeToAndCall,
           [toAddress(address), migrateData],
           this.txParams,
         )
-      : Transactions.sendTransaction(this.contract.methods.upgradeTo, [toAddress(address)], this.txParams);
+      : Transactions.sendTransaction(pAddress,this.contract.methods.upgradeTo, [toAddress(address)], this.txParams);
   }
 
   public async changeAdmin(newAdmin: string): Promise<any> {

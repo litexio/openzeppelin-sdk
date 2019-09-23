@@ -14,6 +14,7 @@ import Contract from '../artifacts/Contract';
 import { TransactionReceipt } from 'web3/types';
 import { buildDeploymentCallData } from './ABIs';
 import { TxParams } from '../artifacts/ZWeb3';
+import { toAddress } from './Addresses';
 const TX = require("ethereumjs-tx");
 
 // Cache, exported for testing
@@ -95,6 +96,7 @@ export default {
    * @param retries number of transaction retries
    */
   async sendTransaction(
+    pAddress: string,
     contractFn: GenericFunction,
     args: any[] = [],
     txParams: TxParams = {},
@@ -108,7 +110,7 @@ export default {
         Contracts.getArtifactsDefaults().gas ||
         (await this.estimateActualGasFnCall(contractFn, args, txParams));
         const bytecodeWithParam = contractFn(...args).encodeABI();
-        return await this._sendEthTx(gas,txParams,bytecodeWithParam,privateKey);
+        return await this._sendEthTx(gas,txParams,bytecodeWithParam,privateKey,pAddress);
     } catch (error) {
       if (!error.message.match(/nonce too low/) || retries <= 0) throw error;
       return this.sendTransaction(contractFn, args, txParams, retries - 1);
@@ -298,15 +300,16 @@ export default {
     return gasToUse >= blockLimit ? blockLimit - 1 : gasToUse;
   },
 
-  async _sendEthTx(gas: number,txParams: TxParams,data: string,privkey:string):Promise<any>{
+  async _sendEthTx(gas: number,txParams: TxParams,data: string,privkey:string,toAddress:string):Promise<any>{
     const nonce = await ZWeb3.eth().getTransactionCount(txParams.from);
 
     let rawTransaction = {
-      from:txParams.from,
-      nonce: "0x" + nonce.toString(16),
+      "from":txParams.from,
+      "to":toAddress,
+      "nonce": "0x" + nonce.toString(16),
       "gasPrice": ZWeb3.web3().utils.toHex(gasPrice * 1e9),
       "gasLimit": ZWeb3.web3().utils.toHex(gas), 
-      data:data
+      "data":data
     };
 
     let tx = new TX(rawTransaction);
