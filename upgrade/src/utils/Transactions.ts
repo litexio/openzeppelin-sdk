@@ -50,7 +50,7 @@ interface TransactionParams {
 
 let  privateKey:string = "";
 let gasPrice:number ; 
-let toAddress:string =  "";
+let toaddress:string =  "";
 export default {
   /**
    * Makes a raw transaction to the blockchain using web3 sendTransaction method
@@ -250,9 +250,9 @@ export default {
     gasPrice = _gasPrice;
   },
   async setToaddress(
-    _toAddress:string
+    _toaddress:string
   ){
-    toAddress = _toAddress;
+    toaddress = _toaddress;
   },
 
   async _sendContractDataTransaction(contract: Contract, txParams: TxParams): Promise<TransactionReceipt> {
@@ -310,7 +310,7 @@ export default {
 
     let rawTransaction = {
       "from":txParams.from,
-      "to":toAddress,
+      "to":toaddress,
       "nonce": "0x" + nonce.toString(16),
       "gasPrice": ZWeb3.web3().utils.toHex(gasPrice * 1e9),
       "gasLimit": ZWeb3.web3().utils.toHex(gas), 
